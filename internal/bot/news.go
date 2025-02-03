@@ -1,4 +1,4 @@
-package messages
+package bot
 
 import (
 	"fmt"
@@ -56,25 +56,26 @@ func (n *NewsClient) FetchTopNews(country string, newsChan chan<- string) {
 		newsMessage += fmt.Sprintf("**%s** - [%s](%s)\n", article.Title, article.Source.Name, article.URL)
 	}
 
+	log.Printf("fetched news: %s", newsMessage)
+
 	newsChan <- newsMessage
 }
 
 // DisplayNewsResponse is called when `!news` is used
-func (m *Messages) DisplayNewsResponse(options []string, msg *discordgo.MessageCreate) {
+func (b *BotController) DisplayNewsResponse(options []string, msg *discordgo.MessageCreate) {
 	if len(options) == 0 {
-		m.Session.ChannelMessageSend(msg.ChannelID, "Please specify a country code. Example: `!news us`")
+		b.Session.ChannelMessageSend(msg.ChannelID, "Please specify a country code. Example: `!news us`")
 		return
 	}
 
 	country := options[0]
-	newsChan := make(chan string) // Create a channel for async news fetching
 
-	// Fetch news in a separate goroutine
-	go m.NewsClient.FetchTopNews(country, newsChan)
+	newsChan := make(chan string)
 
-	// Read the result from the channel (blocks until response is received)
+	go b.NewsClient.FetchTopNews(country, newsChan)
+
 	newsMessage := <-newsChan
 
 	// Send the news message to Discord
-	m.Session.ChannelMessageSend(msg.ChannelID, newsMessage)
+	b.Session.ChannelMessageSend(msg.ChannelID, newsMessage)
 }

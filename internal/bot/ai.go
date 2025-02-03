@@ -1,4 +1,4 @@
-package messages
+package bot
 
 import (
 	"context"
@@ -31,7 +31,7 @@ func (a *AIClient) GetAIResponse(prompt string, responseChan chan<- string) {
 		resp, err = a.client.CreateChatCompletion(
 			context.Background(),
 			openai.ChatCompletionRequest{
-				Model: openai.GPT3Dot5Turbo, // Use GPT-3.5 by default
+				Model: openai.GPT3Dot5Turbo,
 				Messages: []openai.ChatCompletionMessage{
 					{Role: "user", Content: prompt},
 				},
@@ -39,7 +39,7 @@ func (a *AIClient) GetAIResponse(prompt string, responseChan chan<- string) {
 		)
 
 		if err == nil {
-			break // ✅ Success, exit retry loop
+			break
 		}
 
 		// Log the error and retry after waiting
@@ -58,19 +58,38 @@ func (a *AIClient) GetAIResponse(prompt string, responseChan chan<- string) {
 }
 
 // ChatGPTResponse handles `!ai` messages
-func (m *Messages) ChatGPTResponse(options []string, msg *discordgo.MessageCreate) {
+func (b *BotController) ChatGPTResponse(options []string, msg *discordgo.MessageCreate) {
 	if len(options) == 0 {
-		m.Session.ChannelMessageSend(msg.ChannelID, "Please enter a question! Example: `!ai What is Go?`")
+		b.Session.ChannelMessageSend(msg.ChannelID, "Please enter a question! Example: `!ai What is Go?`")
 		return
 	}
 
 	query := strings.Join(options, " ")
+
 	responseChan := make(chan string)
 
 	// Fetch AI response in a goroutine
-	go m.AIClient.GetAIResponse(query, responseChan)
+	go b.AIClient.GetAIResponse(query, responseChan)
 
 	// Wait for response and send to Discord
 	aiResponse := <-responseChan
-	m.Session.ChannelMessageSend(msg.ChannelID, fmt.Sprintf("🤖 **ChatGPT:** %s", aiResponse))
+	b.Session.ChannelMessageSend(msg.ChannelID, fmt.Sprintf("🤖 **ChatGPT:** %s", aiResponse))
+}
+
+func (b *BotController) NewsSummaryCommand(options []string, msg *discordgo.MessageCreate) {
+	country := options[0]
+
+	newsChan := make(chan string)
+	summaryChan := make(chan string)
+
+	go b.NewsClient.FetchTopNews(country, newsChan)
+
+	news := <-newsChan
+
+	go b.AIClient.GetAIResponse(news, summaryChan)
+
+	summary := <-summaryChan
+
+	finalMessage := "**📰 News Summary:**\n" + summary
+	b.Session.ChannelMessageSend(msg.ChannelID, finalMessage)
 }

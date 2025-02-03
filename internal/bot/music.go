@@ -1,4 +1,4 @@
-package messages
+package bot
 
 import (
 	"fmt"
@@ -20,9 +20,9 @@ type Song struct {
 	DownloadErr error  // Holds any error that occurred during download.
 }
 
-func (m *Messages) Play(options []string, msg *discordgo.MessageCreate) {
+func (b *BotController) Play(options []string, msg *discordgo.MessageCreate) {
 	if len(options) < 1 {
-		m.displayCmdError(msg.ChannelID, "⚠ Usage: `!play <music_link>`")
+		b.displayCmdError(msg.ChannelID, "⚠ Usage: `!play <music_link>`")
 		return
 	}
 
@@ -36,8 +36,8 @@ func (m *Messages) Play(options []string, msg *discordgo.MessageCreate) {
 	}
 
 	// Append the song immediately to the queue.
-	m.musicQueue = append(m.musicQueue, song)
-	m.displayCmdError(msg.ChannelID, fmt.Sprintf("🎵 Added to queue: %s", youtubeURL))
+	b.musicQueue = append(b.musicQueue, song)
+	b.displayCmdError(msg.ChannelID, fmt.Sprintf("🎵 Added to queue: %s", youtubeURL))
 
 	// Start downloading in the background.
 	go func(s *Song) {
@@ -50,27 +50,27 @@ func (m *Messages) Play(options []string, msg *discordgo.MessageCreate) {
 		s.Downloading = false
 	}(song)
 
-	if !m.isPlaying {
-		go m.startPlaying(msg)
+	if !b.isPlaying {
+		go b.startPlaying(msg)
 	}
 }
 
 // startPlaying processes the queue and plays songs.
-func (m *Messages) startPlaying(msg *discordgo.MessageCreate) {
-	if len(m.musicQueue) == 0 {
-		m.isPlaying = false
-		m.displayCmdError(msg.ChannelID, "🎵 Queue is empty.")
+func (b *BotController) startPlaying(msg *discordgo.MessageCreate) {
+	if len(b.musicQueue) == 0 {
+		b.isPlaying = false
+		b.displayCmdError(msg.ChannelID, "🎵 Queue is empty.")
 		return
 	}
 
-	m.isPlaying = true
+	b.isPlaying = true
 
-	for len(m.musicQueue) > 0 {
+	for len(b.musicQueue) > 0 {
 		// Dequeue the first song.
-		song := m.musicQueue[0]
-		m.musicQueue = m.musicQueue[1:]
+		song := b.musicQueue[0]
+		b.musicQueue = b.musicQueue[1:]
 
-		m.displayCmdError(msg.ChannelID, fmt.Sprintf("🎶 Now playing: %s", song.URL))
+		b.displayCmdError(msg.ChannelID, fmt.Sprintf("🎶 Now playing: %s", song.URL))
 
 		// Wait until the song finishes downloading.
 		for song.Downloading {
@@ -81,20 +81,21 @@ func (m *Messages) startPlaying(msg *discordgo.MessageCreate) {
 		// If there was an error during download, skip the song.
 		if song.DownloadErr != nil || song.FilePath == "" {
 			log.Println("❌ Error downloading song:", song.DownloadErr)
-			m.displayCmdError(msg.ChannelID, fmt.Sprintf("⚠ Error downloading song: %s", song.URL))
+			b.displayCmdError(msg.ChannelID, fmt.Sprintf("⚠ Error downloading song: %s", song.URL))
 			continue
 		}
 
 		// Ensure the file exists.
 		if _, err := os.Stat(song.FilePath); os.IsNotExist(err) {
 			log.Println("❌ Error: File does not exist!", song.FilePath)
-			m.displayCmdError(msg.ChannelID, "⚠ Error: Downloaded file not found.")
+			b.displayCmdError(msg.ChannelID, "⚠ Error: Downloaded file not found.")
 			continue
 		}
 
-		vc := m.JoinChannelByName(msg.GuildID, m.channelName)
-		if vc == nil {
-			m.displayCmdError(msg.ChannelID, "⚠ Failed to join voice channel.")
+		vc, err := b.joinUserChannel(msg.GuildID, msg.Author.ID, true)
+
+		if err != nil {
+			b.displayCmdError(msg.ChannelID, "⚠ Failed to join voice channel.")
 			return
 		}
 
@@ -104,7 +105,7 @@ func (m *Messages) startPlaying(msg *discordgo.MessageCreate) {
 		StreamAudio(vc, song.FilePath)
 	}
 
-	m.isPlaying = false
+	b.isPlaying = false
 }
 
 // StreamAudio streams the specified file to Discord.
