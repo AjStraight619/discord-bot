@@ -1,14 +1,16 @@
 package main
 
 import (
-	"discord-bot/internal/bot"
-	"discord-bot/utils"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
+
+	"github.com/AjStraight619/discord-bot/deps"
+	"github.com/AjStraight619/discord-bot/internal/bot"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -30,27 +32,35 @@ func main() {
 	Token := os.Getenv("DISCORD_KEY")
 	NewsAPI := os.Getenv("NEWS_KEY")
 	OpenAIAPI := os.Getenv("OPENAI_KEY")
+	SportsDataIO := os.Getenv("SPORTS_DATA_IO_KEY")
 
 	if Token == "" || NewsAPI == "" || OpenAIAPI == "" {
 		log.Fatal("Missing environment variables.")
 	}
 
 	dg, err := discordgo.New("Bot " + Token)
+
 	if err != nil {
 		log.Fatalf("Error creating Discord session: %v", err)
 	}
 
 	newsClient := &bot.NewsClient{APIKey: NewsAPI}
 	aiClient := bot.NewAIClient(OpenAIAPI)
+	sportsClient := &bot.SportsClient{APIKey: SportsDataIO}
 
-	msgHandler := &bot.BotController{
-		Session:       dg,
-		NewsClient:    newsClient,
-		AIClient:      aiClient,
-		VoiceGuildMap: nil,
+	botController := &bot.BotController{
+		Session:         dg,
+		NewsClient:      newsClient,
+		AIClient:        aiClient,
+		SportsClient:    sportsClient,
+		VoiceGuildMap:   nil,
+		TimeoutDuration: 20 * time.Second,
 	}
 
-	dg.AddHandler(msgHandler.MessageHandler)
+	// Initialize the command registry
+	botController.InitCommands()
+
+	dg.AddHandler(botController.MessageHandler)
 
 	// Open a connection to Discord
 	err = dg.Open()

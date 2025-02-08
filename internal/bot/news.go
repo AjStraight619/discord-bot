@@ -27,6 +27,33 @@ type NewsResponse struct {
 	} `json:"articles"`
 }
 
+type NewsCommand struct{}
+
+// Execute fetches and sends the top news headlines for the provided country code.
+func (n NewsCommand) Execute(b *BotController, msg *discordgo.MessageCreate, options []string) {
+	if len(options) == 0 {
+		b.Session.ChannelMessageSend(msg.ChannelID, "Please specify a country code. Example: `!news us`")
+		return
+	}
+
+	country := options[0]
+	newsChan := make(chan string)
+
+	// Fetch news in a separate goroutine.
+	go b.NewsClient.FetchTopNews(country, newsChan)
+
+	// Wait for the response.
+	newsMessage := <-newsChan
+
+	// Send the news message to the Discord channel.
+	b.Session.ChannelMessageSend(msg.ChannelID, newsMessage)
+}
+
+// Help returns a usage string for the news command.
+func (n NewsCommand) Help() string {
+	return "!news <country code> - Displays the top headlines for the specified country."
+}
+
 // FetchTopNews runs in a goroutine and sends the result to the channel
 func (n *NewsClient) FetchTopNews(country string, newsChan chan<- string) {
 	url := fmt.Sprintf("https://newsapi.org/v2/top-headlines?country=%s&apiKey=%s", country, n.APIKey)
