@@ -12,8 +12,7 @@ import (
 	deps "github.com/AjStraight619/discord-bot/deps"
 	"github.com/AjStraight619/discord-bot/internal/bot"
 	"github.com/AjStraight619/discord-bot/internal/config"
-	"github.com/AjStraight619/discord-bot/internal/members"
-	"github.com/AjStraight619/discord-bot/internal/utils"
+	"github.com/AjStraight619/discord-bot/internal/messaging"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -56,22 +55,29 @@ func main() {
 
 	fmt.Println("Bot is now running! Press CTRL+C to exit.")
 
-	guild := utils.FindGuildByName(dg, "King's Landing")
+	cm := messaging.InitCron(dg, 15)
 
-	if guild == nil {
-		log.Println("Couldnt find guild")
-		return
-	}
+	cm.StartCydCron()
 
-	allMembers, err := members.FetchAllGuildMembers(dg, guild.ID)
+	// guild := utils.FindGuildByName(dg, "King's Landing")
 
-	if err != nil {
-		log.Printf("Not able to fetch members: %v", err)
-	}
+	// if guild == nil {
+	// 	log.Println("Couldnt find guild")
+	// 	return
+	// }
 
-	for _, member := range allMembers {
-		log.Printf("Member: %s (ID: %s)", member.User.Username, member.User.ID)
-	}
+	// allMembers, err := members.FetchAllGuildMembers(dg, guild.ID)
+
+	// if err != nil {
+	// 	log.Printf("Not able to fetch members: %v", err)
+	// }
+
+	// for _, member := range allMembers {
+	// 	log.Printf("Member: %s (ID: %s)", member.User.Username, member.User.ID)
+	// 	// if strings.EqualFold(member.User.Username, "crispylols") {
+	// 	// 	messaging.SendDM(dg, member.User.ID, "Matt did u get this?")
+	// 	// }
+	// }
 
 	// Graceful shutdown handling
 	stop := make(chan os.Signal, 1)

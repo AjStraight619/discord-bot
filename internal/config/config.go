@@ -26,7 +26,7 @@ func LoadConfig() *Config {
 		DiscordKey: os.Getenv("DISCORD_KEY"),
 		OpenAIKey:  os.Getenv("OPENAI_KEY"),
 		NewsKey:    os.Getenv("NEWS_KEY"),
-		SportsKey:  os.Getenv("SPORTS_DATA_IO_KEY"),
+		SportsKey:  os.Getenv("SPORTS_RADAR_KEY"),
 	}
 
 	if cfg.OpenAIKey == "" || cfg.NewsKey == "" || cfg.SportsKey == "" || cfg.DiscordKey == "" {

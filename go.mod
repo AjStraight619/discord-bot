@@ -9,6 +9,7 @@ require (
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/joho/godotenv v1.5.1
 	github.com/jonas747/dca v0.0.0-20210930103944-155f5e5f0cc7
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/sashabaranov/go-openai v1.36.1
 )
 

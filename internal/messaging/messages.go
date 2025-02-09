@@ -18,11 +18,11 @@ func MessageAllMembers(dg *discordgo.Session, guildID, message string) {
 		if member.User.Bot {
 			continue
 		}
-		sendDM(dg, member.User.ID, message)
+		SendDM(dg, member.User.ID, message)
 	}
 }
 
-func sendDM(dg *discordgo.Session, userID, message string) {
+func SendDM(dg *discordgo.Session, userID, message string) {
 	channel, err := dg.UserChannelCreate(userID)
 	if err != nil {
 		log.Printf("Error creating DM channel for user %s: %v", userID, err)

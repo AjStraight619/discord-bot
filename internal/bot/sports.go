@@ -3,17 +3,16 @@ package bot
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/AjStraight619/discord-bot/internal/apiclients"
 	"github.com/bwmarrin/discordgo"
 )
 
 // Teams and Team structures remain the same.
+
 type Teams struct {
 	Teams []Team `json:"teams"`
 }
@@ -41,40 +40,42 @@ func (sc SportsCommand) Execute(b *BotController, msg *discordgo.MessageCreate, 
 	}
 
 	// Create a SportsQuery using the options and loaded teams.
-	query, err := NewSportsQuery(options, teams)
-	if err != nil {
-		b.displayCmdError(msg.ChannelID, fmt.Sprintf("⚠ %s", err.Error()))
-		return
-	}
+	// query, err := NewSportsQuery(options, teams)
+	// if err != nil {
+	// 	b.displayCmdError(msg.ChannelID, fmt.Sprintf("⚠ %s", err.Error()))
+	// 	return
+	// }
 
-	// Determine season and mode.
-	// If no season is provided, you can default to a value (for example, "2024").
-	season := query.Season
-	if season == "" {
-		season = "2024" // Adjust as needed.
-	}
-	// Assume mode "REG" for regular season. (Alternatively, you could support an optional mode parameter.)
-	mode := "REG"
+	// // Determine season and mode.
+	// // If no season is provided, you can default to a value (for example, "2024").
+	// season := query.Season
+	// if season == "" {
+	// 	season = "2024" // Adjust as needed.
+	// }
+	// // Assume mode "REG" for regular season. (Alternatively, you could support an optional mode parameter.)
+	// mode := "REG"
 
-	// Call the external API function to get team statistics.
-	stats, err := apiclients.GetTeamStatistics(query.TeamID, season, mode)
-	if err != nil {
-		b.displayCmdError(msg.ChannelID, "Error fetching team statistics.")
-		return
-	}
+	// // Call the external API function to get team statistics.
+	// stats, err := apiclients.GetTeamStatistics(query.TeamID, season, mode)
+	// if err != nil {
+	// 	b.displayCmdError(msg.ChannelID, "Error fetching team statistics.")
+	// 	return
+	// }
 
-	// Send the result to the Discord channel.
-	b.Session.ChannelMessageSend(msg.ChannelID, stats)
+	// // Send the result to the Discord channel.
+	// b.Session.ChannelMessageSend(msg.ChannelID, string(stats))
 }
 
 func (sc SportsCommand) Help() string {
-	return "!sports <team> <player> [season] - Query for NBA stats. Example: !sports LAL \"LeBron James\" 2024POST"
+	return "!sports <team> <player> [season] - Query for NBA stats. Example: !sports Lakers LeBron James 2024"
 }
 
 // LoadTeams loads the teams from a JSON file.
 func LoadTeams() *Teams {
 	// Adjust the path as needed. Here, we assume the data file is at the project root in a 'data' folder.
-	rootDir, err := filepath.Abs("../../")
+
+	rootDir, err := filepath.Abs("")
+	log.Printf("Root dir: %s", rootDir)
 	if err != nil {
 		log.Printf("Error getting rootDir: %v", err)
 		return nil
@@ -134,4 +135,9 @@ func NewSportsQuery(options []string, teams *Teams) (*SportsQuery, error) {
 		query.Season = options[2]
 	}
 	return query, nil
+}
+
+func FindPlayerByName(playername string, teams *Teams) interface{} {
+
+	return nil
 }
