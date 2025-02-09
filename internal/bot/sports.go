@@ -2,229 +2,136 @@ package bot
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/AjStraight619/discord-bot/internal/apiclients"
 	"github.com/bwmarrin/discordgo"
-	"github.com/go-resty/resty/v2"
 )
 
-type SportsClient struct {
-	APIKey      string
-	PlayerStats *PlayerStats
-	TeamStats   *TeamStats
+// Teams and Team structures remain the same.
+type Teams struct {
+	Teams []Team `json:"teams"`
 }
 
-type SportsQuery struct {
-	SportsClient *SportsClient
-	APIKey       string
-	Team         string
-	Name         string
-	Season       string
+type Team struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
+// SportsCommand defines the sports command.
 type SportsCommand struct{}
 
-type Player struct {
-	PlayerID  int    `json:"PlayerID"`
-	FirstName string `json:"FirstName"`
-	LastName  string `json:"LastName"`
-	Team      string `json:"Team"`
-}
-
-type PlayerSeason struct {
-	PlayerID  int     `json:"PlayerID"`
-	FirstName string  `json:"FirstName"`
-	LastName  string  `json:"LastName"`
-	Team      string  `json:"Team"`
-	Points    float64 `json:"Points"`
-	Assists   float64 `json:"Assists"`
-	Rebounds  float64 `json:"Rebounds"`
-}
-
-type PlayerStats struct {
-	StatID            int    `json:"StatID"`
-	TeamID            int    `json:"TeamID"`
-	PlayerID          int    `json:"PlayerID"`
-	SeasonType        int    `json:"SeasonType"`
-	Season            int    `json:"Season"`
-	Name              string `json:"Name"`
-	Team              string `json:"Team"`
-	Position          string `json:"Position"`
-	Started           int    `json:"Started"`
-	FanDuelSalary     int    `json:"FanDuelSalary"`
-	DraftKingsSalary  int    `json:"DraftKingsSalary"`
-	FantasyDataSalary int    `json:"FantasyDataSalary"`
-	YahooSalary       int    `json:"YahooSalary"`
-	InjuryStatus      string `json:"InjuryStatus"`
-	InjuryBodyPart    string `json:"InjuryBodyPart"`
-	// InjuryStartDate may be null in the JSON, so we use a pointer.
-	InjuryStartDate      *string `json:"InjuryStartDate"`
-	InjuryNotes          string  `json:"InjuryNotes"`
-	FanDuelPosition      string  `json:"FanDuelPosition"`
-	DraftKingsPosition   string  `json:"DraftKingsPosition"`
-	YahooPosition        string  `json:"YahooPosition"`
-	OpponentRank         int     `json:"OpponentRank"`
-	OpponentPositionRank int     `json:"OpponentPositionRank"`
-	GlobalTeamID         int     `json:"GlobalTeamID"`
-	// FantasyDraftSalary may be null so we use a pointer.
-	FantasyDraftSalary   *int   `json:"FantasyDraftSalary"`
-	FantasyDraftPosition string `json:"FantasyDraftPosition"`
-	GameID               int    `json:"GameID"`
-	OpponentID           int    `json:"OpponentID"`
-	Opponent             string `json:"Opponent"`
-	// You can change these to time.Time if you prefer parsing the date/time strings.
-	Day                           string  `json:"Day"`
-	DateTime                      string  `json:"DateTime"`
-	HomeOrAway                    string  `json:"HomeOrAway"`
-	IsGameOver                    bool    `json:"IsGameOver"`
-	GlobalGameID                  int     `json:"GlobalGameID"`
-	GlobalOpponentID              int     `json:"GlobalOpponentID"`
-	Updated                       string  `json:"Updated"`
-	Games                         int     `json:"Games"`
-	FantasyPoints                 float64 `json:"FantasyPoints"`
-	Minutes                       int     `json:"Minutes"`
-	Seconds                       int     `json:"Seconds"`
-	FieldGoalsMade                float64 `json:"FieldGoalsMade"`
-	FieldGoalsAttempted           float64 `json:"FieldGoalsAttempted"`
-	FieldGoalsPercentage          float64 `json:"FieldGoalsPercentage"`
-	EffectiveFieldGoalsPercentage float64 `json:"EffectiveFieldGoalsPercentage"`
-	TwoPointersMade               float64 `json:"TwoPointersMade"`
-	TwoPointersAttempted          float64 `json:"TwoPointersAttempted"`
-	TwoPointersPercentage         float64 `json:"TwoPointersPercentage"`
-	ThreePointersMade             float64 `json:"ThreePointersMade"`
-	ThreePointersAttempted        float64 `json:"ThreePointersAttempted"`
-	ThreePointersPercentage       float64 `json:"ThreePointersPercentage"`
-	FreeThrowsMade                float64 `json:"FreeThrowsMade"`
-	FreeThrowsAttempted           float64 `json:"FreeThrowsAttempted"`
-	FreeThrowsPercentage          float64 `json:"FreeThrowsPercentage"`
-	OffensiveRebounds             float64 `json:"OffensiveRebounds"`
-	DefensiveRebounds             float64 `json:"DefensiveRebounds"`
-	Rebounds                      float64 `json:"Rebounds"`
-	OffensiveReboundsPercentage   float64 `json:"OffensiveReboundsPercentage"`
-	DefensiveReboundsPercentage   float64 `json:"DefensiveReboundsPercentage"`
-	TotalReboundsPercentage       float64 `json:"TotalReboundsPercentage"`
-	Assists                       float64 `json:"Assists"`
-	Steals                        float64 `json:"Steals"`
-	BlockedShots                  float64 `json:"BlockedShots"`
-	Turnovers                     float64 `json:"Turnovers"`
-	PersonalFouls                 float64 `json:"PersonalFouls"`
-	Points                        float64 `json:"Points"`
-	TrueShootingAttempts          float64 `json:"TrueShootingAttempts"`
-	TrueShootingPercentage        float64 `json:"TrueShootingPercentage"`
-	PlayerEfficiencyRating        float64 `json:"PlayerEfficiencyRating"`
-	AssistsPercentage             float64 `json:"AssistsPercentage"`
-	StealsPercentage              float64 `json:"StealsPercentage"`
-	BlocksPercentage              float64 `json:"BlocksPercentage"`
-	TurnOversPercentage           float64 `json:"TurnOversPercentage"`
-	UsageRatePercentage           float64 `json:"UsageRatePercentage"`
-	FantasyPointsFanDuel          float64 `json:"FantasyPointsFanDuel"`
-	FantasyPointsDraftKings       float64 `json:"FantasyPointsDraftKings"`
-	FantasyPointsYahoo            float64 `json:"FantasyPointsYahoo"`
-	PlusMinus                     float64 `json:"PlusMinus"`
-	DoubleDoubles                 float64 `json:"DoubleDoubles"`
-	TripleDoubles                 float64 `json:"TripleDoubles"`
-	FantasyPointsFantasyDraft     float64 `json:"FantasyPointsFantasyDraft"`
-	IsClosed                      bool    `json:"IsClosed"`
-	LineupConfirmed               bool    `json:"LineupConfirmed"`
-	LineupStatus                  string  `json:"LineupStatus"`
-}
-
-type TeamStats struct {
-	Team   string `json:"Team"`
-	Name   string `json:"Name"`
-	Wins   int    `json:"Wins"`
-	Losses int    `json:"Losses"`
-	Season int    `json:"Season"`
-}
-
 func (sc SportsCommand) Execute(b *BotController, msg *discordgo.MessageCreate, options []string) {
-
-	if len(options) < 1 {
-		b.displayCmdError(msg.ChannelID, "⚠ Usage: `!sports <team: (e.g: LAL)> <player: (e.g: LeBron James)>`")
+	// Validate that at least a team and a player name are provided.
+	if len(options) < 2 {
+		b.displayCmdError(msg.ChannelID, "⚠ Usage: `!sports <team> <player> [season]`")
 		return
 	}
 
-	team := options[0]
-	name := options[1]
-
-	sportsQuery := b.SportsClient.NewSportsQuery(team, name)
-
-	log.Printf("Sports query: %+v", sportsQuery)
-
-}
-
-func (sc SportsCommand) Help() {
-
-}
-
-func (s SportsClient) NewSportsQuery(team, name string) *SportsQuery {
-	return &SportsQuery{
-		APIKey: s.APIKey,
-		Team:   team,
-		Name:   name,
-		Season: "2024POST", // Default season
+	// Load teams data from file.
+	teams := LoadTeams()
+	if teams == nil {
+		b.displayCmdError(msg.ChannelID, "⚠ Error loading team data.")
+		return
 	}
+
+	// Create a SportsQuery using the options and loaded teams.
+	query, err := NewSportsQuery(options, teams)
+	if err != nil {
+		b.displayCmdError(msg.ChannelID, fmt.Sprintf("⚠ %s", err.Error()))
+		return
+	}
+
+	// Determine season and mode.
+	// If no season is provided, you can default to a value (for example, "2024").
+	season := query.Season
+	if season == "" {
+		season = "2024" // Adjust as needed.
+	}
+	// Assume mode "REG" for regular season. (Alternatively, you could support an optional mode parameter.)
+	mode := "REG"
+
+	// Call the external API function to get team statistics.
+	stats, err := apiclients.GetTeamStatistics(query.TeamID, season, mode)
+	if err != nil {
+		b.displayCmdError(msg.ChannelID, "Error fetching team statistics.")
+		return
+	}
+
+	// Send the result to the Discord channel.
+	b.Session.ChannelMessageSend(msg.ChannelID, stats)
 }
 
-func NewSportsClient(apiKey string) *SportsClient {
-	return &SportsClient{APIKey: apiKey}
+func (sc SportsCommand) Help() string {
+	return "!sports <team> <player> [season] - Query for NBA stats. Example: !sports LAL \"LeBron James\" 2024POST"
 }
 
-func (s SportsClient) GetSportData(apiURL string) (*resty.Response, error) {
-	client := resty.New()
+// LoadTeams loads the teams from a JSON file.
+func LoadTeams() *Teams {
+	// Adjust the path as needed. Here, we assume the data file is at the project root in a 'data' folder.
+	rootDir, err := filepath.Abs("../../")
+	if err != nil {
+		log.Printf("Error getting rootDir: %v", err)
+		return nil
+	}
 
-	resp, err := client.R().
-		SetHeader("Ocp-Apim-Subscription-Key", s.APIKey).
-		Get(apiURL)
+	dataPath := filepath.Join(rootDir, "data", "nba_teams.json")
+	data, err := os.ReadFile(dataPath)
+	if err != nil {
+		log.Printf("Error reading file: %v", err)
+		return nil
+	}
 
+	var teams Teams
+	err = json.Unmarshal(data, &teams)
+	if err != nil {
+		log.Printf("Error unmarshaling data: %v", err)
+		return nil
+	}
+
+	log.Printf("Teams loaded: %+v", teams)
+	return &teams
+}
+
+// FindTeam searches for a team by name or ID.
+func (teams *Teams) FindTeam(query string) (*Team, error) {
+	for _, team := range teams.Teams {
+		if strings.EqualFold(team.Name, query) || strings.EqualFold(team.ID, query) {
+			return &team, nil
+		}
+	}
+	return nil, errors.New("team not found")
+}
+
+// SportsQuery encapsulates a sports query.
+type SportsQuery struct {
+	TeamID     string
+	TeamName   string
+	PlayerName string
+	Season     string
+}
+
+func NewSportsQuery(options []string, teams *Teams) (*SportsQuery, error) {
+	teamQuery := options[0]
+	playerQuery := options[1]
+
+	team, err := teams.FindTeam(teamQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp, nil
-}
-
-func (s SportsClient) GetPlayerSeasonStats(season string) ([]PlayerStats, error) {
-	client := resty.New()
-
-	url := fmt.Sprintf("https://api.sportsdata.io/v3/nba/stats/json/PlayerSeasonStats/%s?key=%s", season, s.APIKey)
-
-	// Pass the API key in the header as required.
-	resp, err := client.R().
-		SetHeader("Ocp-Apim-Subscription-Key", s.APIKey).
-		Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("error making request: %w", err)
+	query := &SportsQuery{
+		TeamID:     team.ID,
+		TeamName:   team.Name,
+		PlayerName: playerQuery,
 	}
-
-	// Unmarshal the response body into a slice of PlayerSeason.
-	var stats []PlayerStats
-	if err := json.Unmarshal(resp.Body(), &stats); err != nil {
-		return nil, fmt.Errorf("error unmarshalling response: %w", err)
+	if len(options) >= 3 {
+		query.Season = options[2]
 	}
-
-	return stats, nil
-}
-
-func FindPlayerSeasonStats(stats []PlayerStats, name string) *PlayerStats {
-	for _, p := range stats {
-		if p.Name == name {
-			return &p
-		}
-	}
-	return nil
-}
-
-func GetTotalGamesByTeam(teamName string) (int, error) {
-	return 0, nil
-}
-
-func (s SportsClient) GetTeamStats(teamName string) *TeamStats {
-
-	url := fmt.Sprintf("https://api.sportsdata.io/v3/nba/scores/json/TeamSeasonStats/2024?key=%s", s.APIKey)
-
-	log.Printf("url: %s", url)
-
-	return &TeamStats{}
+	return query, nil
 }

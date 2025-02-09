@@ -13,19 +13,19 @@ type TimeoutCommand struct{}
 
 func (tc TimeoutCommand) Execute(b *BotController, msg *discordgo.MessageCreate, options []string) {
 	if len(options) != 1 {
-		b.displayCmdError(msg.ChannelID, "Please specify a timeout duration: !timeout 30 (This will set a timeout for 30 minutes)")
+		b.displayCmdError(msg.ChannelID, "Please specify a timeout duration: !timeout 30 (This will set a timeout for 30 minutes) defaults to 20 minutes")
 		return
 	}
+
 	timeout := options[0]
 	num, err := strconv.Atoi(timeout)
 
 	if err != nil {
-		b.displayCmdError(msg.ChannelID, "Please input an number")
+		b.displayCmdError(msg.ChannelID, "Please input a number")
 		return
 	}
 
 	b.TimeoutDuration = time.Duration(num) * time.Minute
-	b.ResetTimeout()
 	b.Session.ChannelMessageSend(msg.ChannelID, fmt.Sprintf("Timeout duration set to %d minutes.", num))
 
 }
@@ -57,27 +57,11 @@ func (b *BotController) ResetTimeout() {
 		log.Println("ResetTimeout: No existing timer found. Creating a new one.")
 	}
 
-	endTime := time.Now().Add(b.TimeoutDuration)
-
 	// Start a new timer with the configured duration.
 	b.inactivityTimer = time.AfterFunc(b.TimeoutDuration, func() {
 		log.Println("Timeout reached. Executing timeout action.")
 		b.OnTimeout()
 	})
-
-	go func() {
-		ticker := time.NewTicker(time.Second)
-		defer ticker.Stop()
-		for {
-			remaining := time.Until(endTime)
-			if remaining <= 0 {
-				break
-			}
-			log.Printf("Countdown: %d seconds remaining", int(remaining.Seconds()))
-			// Wait for the next tick.
-			<-ticker.C
-		}
-	}()
 
 	log.Printf("ResetTimeout: New timer started with a timeout duration of %v.\n", b.TimeoutDuration)
 }

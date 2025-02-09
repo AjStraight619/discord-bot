@@ -1,0 +1,33 @@
+{
+  "teams": [
+    { "id": "583ec70e-fb46-11e1-82cb-f4ce4684ea4c", "name": "Knicks" },
+    { "id": "583ec87d-fb46-11e1-82cb-f4ce4684ea4c", "name": "76ers" },
+    { "id": "583ec9d6-fb46-11e1-82cb-f4ce4684ea4c", "name": "Nets" },
+    { "id": "583eccfa-fb46-11e1-82cb-f4ce4684ea4c", "name": "Celtics" },
+    { "id": "583ecda6-fb46-11e1-82cb-f4ce4684ea4c", "name": "Raptors" },
+    { "id": "583ec5fd-fb46-11e1-82cb-f4ce4684ea4c", "name": "Bulls" },
+    { "id": "583ec773-fb46-11e1-82cb-f4ce4684ea4c", "name": "Cavaliers" },
+    { "id": "583ec7cd-fb46-11e1-82cb-f4ce4684ea4c", "name": "Pacers" },
+    { "id": "583ec928-fb46-11e1-82cb-f4ce4684ea4c", "name": "Pistons" },
+    { "id": "583ecefd-fb46-11e1-82cb-f4ce4684ea4c", "name": "Bucks" },
+    { "id": "583eca2f-fb46-11e1-82cb-f4ce4684ea4c", "name": "Timberwolves" },
+    { "id": "583ece50-fb46-11e1-82cb-f4ce4684ea4c", "name": "Jazz" },
+    { "id": "583ecfff-fb46-11e1-82cb-f4ce4684ea4c", "name": "Thunder" },
+    { "id": "583ed056-fb46-11e1-82cb-f4ce4684ea4c", "name": "Trail Blazers" },
+    { "id": "583ed102-fb46-11e1-82cb-f4ce4684ea4c", "name": "Nuggets" },
+    { "id": "583eca88-fb46-11e1-82cb-f4ce4684ea4c", "name": "Grizzlies" },
+    { "id": "583ecb3a-fb46-11e1-82cb-f4ce4684ea4c", "name": "Rockets" },
+    { "id": "583ecc9a-fb46-11e1-82cb-f4ce4684ea4c", "name": "Pelicans" },
+    { "id": "583ecd4f-fb46-11e1-82cb-f4ce4684ea4c", "name": "Spurs" },
+    { "id": "583ecf50-fb46-11e1-82cb-f4ce4684ea4c", "name": "Mavericks" },
+    { "id": "583ec825-fb46-11e1-82cb-f4ce4684ea4c", "name": "Warriors" },
+    { "id": "583ecae2-fb46-11e1-82cb-f4ce4684ea4c", "name": "Lakers" },
+    { "id": "583ecdfb-fb46-11e1-82cb-f4ce4684ea4c", "name": "Clippers" },
+    { "id": "583ecfa8-fb46-11e1-82cb-f4ce4684ea4c", "name": "Suns" },
+    { "id": "583ed0ac-fb46-11e1-82cb-f4ce4684ea4c", "name": "Kings" },
+    { "id": "583ed0b9-fb46-11e1-82cb-f4ce4684ea4c", "name": "Heat" },
+    { "id": "583ed102-fb46-11e1-82cb-f4ce4684ea4c", "name": "Magic" },
+    { "id": "583ed157-fb46-11e1-82cb-f4ce4684ea4c", "name": "Hornets" },
+    { "id": "583ed205-fb46-11e1-82cb-f4ce4684ea4c", "name": "Hawks" }
+  ]
+}

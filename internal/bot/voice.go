@@ -22,9 +22,7 @@ type PersonVoice struct {
 }
 
 type VoiceCommandHandler struct {
-	Bot           *BotController
-	voiceRecv     chan *discordgo.Packet
-	voiceTextChan chan string
+	Bot *BotController
 }
 
 type ListenCommand struct{}

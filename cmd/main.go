@@ -9,55 +9,39 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AjStraight619/discord-bot/deps"
+	deps "github.com/AjStraight619/discord-bot/deps"
 	"github.com/AjStraight619/discord-bot/internal/bot"
+	"github.com/AjStraight619/discord-bot/internal/config"
+	"github.com/AjStraight619/discord-bot/internal/members"
+	"github.com/AjStraight619/discord-bot/internal/utils"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	rootDir := utils.GetProjectRoot()
+	rootDir := deps.GetProjectRoot()
 	binDir := filepath.Join(rootDir, "bin")
 	os.MkdirAll(binDir, os.ModePerm)
 
-	utils.EnsureYTDLP(binDir)
-	utils.EnsureFFmpeg(binDir)
+	deps.EnsureYTDLP(binDir)
+	deps.EnsureFFmpeg(binDir)
 
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	config.LoadConfig()
 
-	Token := os.Getenv("DISCORD_KEY")
-	NewsAPI := os.Getenv("NEWS_KEY")
-	OpenAIAPI := os.Getenv("OPENAI_KEY")
-	SportsDataIO := os.Getenv("SPORTS_DATA_IO_KEY")
-
-	if Token == "" || NewsAPI == "" || OpenAIAPI == "" {
-		log.Fatal("Missing environment variables.")
-	}
-
-	dg, err := discordgo.New("Bot " + Token)
+	dg, err := discordgo.New("Bot " + config.AppConfig.DiscordKey)
 
 	if err != nil {
 		log.Fatalf("Error creating Discord session: %v", err)
 	}
 
-	newsClient := &bot.NewsClient{APIKey: NewsAPI}
-	aiClient := bot.NewAIClient(OpenAIAPI)
-	sportsClient := &bot.SportsClient{APIKey: SportsDataIO}
+	dg.StateEnabled = true
+	dg.Identify.Intents = discordgo.IntentsGuilds | discordgo.IntentsGuildMessages | discordgo.IntentsGuildMembers
 
 	botController := &bot.BotController{
 		Session:         dg,
-		NewsClient:      newsClient,
-		AIClient:        aiClient,
-		SportsClient:    sportsClient,
-		VoiceGuildMap:   nil,
-		TimeoutDuration: 20 * time.Second,
+		TimeoutDuration: time.Duration(20) * time.Minute,
 	}
 
-	// Initialize the command registry
 	botController.InitCommands()
 
 	dg.AddHandler(botController.MessageHandler)
@@ -68,7 +52,26 @@ func main() {
 		log.Fatalf("Error connecting to Discord: %v", err)
 	}
 
+	time.Sleep(3 * time.Second)
+
 	fmt.Println("Bot is now running! Press CTRL+C to exit.")
+
+	guild := utils.FindGuildByName(dg, "King's Landing")
+
+	if guild == nil {
+		log.Println("Couldnt find guild")
+		return
+	}
+
+	allMembers, err := members.FetchAllGuildMembers(dg, guild.ID)
+
+	if err != nil {
+		log.Printf("Not able to fetch members: %v", err)
+	}
+
+	for _, member := range allMembers {
+		log.Printf("Member: %s (ID: %s)", member.User.Username, member.User.ID)
+	}
 
 	// Graceful shutdown handling
 	stop := make(chan os.Signal, 1)
