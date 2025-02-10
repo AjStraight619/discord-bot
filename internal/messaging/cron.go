@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/AjStraight619/discord-bot/internal/apiclients"
-	"github.com/AjStraight619/discord-bot/internal/bot"
 	"github.com/AjStraight619/discord-bot/internal/members"
 	"github.com/AjStraight619/discord-bot/internal/models"
+	sportsutils "github.com/AjStraight619/discord-bot/internal/sports_utils"
 	"github.com/AjStraight619/discord-bot/internal/utils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/robfig/cron/v3"
@@ -39,7 +39,7 @@ func (cm *CronMessage) StartCydCron() {
 	// Load team data.
 
 	// TODO: Move LoadTeams to sports utils package. Bot should not know about loading teams.
-	teams := bot.LoadTeams()
+	teams := sportsutils.LoadTeams()
 	if teams == nil {
 		log.Printf("Failed to load teams")
 		return
@@ -91,7 +91,7 @@ func (cm *CronMessage) StartCydCron() {
 	// Find the target member with username "cydstynine".
 	var targetUserID string
 	for _, member := range allMembers {
-		if strings.EqualFold(member.User.Username, "aj238987") {
+		if strings.EqualFold(member.User.Username, "cydstynine") {
 			targetUserID = member.User.ID
 			break
 		}
@@ -101,7 +101,7 @@ func (cm *CronMessage) StartCydCron() {
 		return
 	}
 
-	schedule := "@hourly"
+	schedule := "@daily"
 
 	// Add the cron job to send a DM with the formatted message.
 	_, err = cm.cron.AddFunc(schedule, func() {
