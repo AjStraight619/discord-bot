@@ -19,10 +19,8 @@ func FetchAllGuildMembers(dg *discordgo.Session, guildID string) ([]*discordgo.M
 		}
 
 		allMembers = append(allMembers, members...)
-		// Set lastMemberID to the last member's user ID to paginate.
 		lastMemberID = members[len(members)-1].User.ID
 
-		// If we got less than the maximum, we're done.
 		if len(members) < 1000 {
 			break
 		}
